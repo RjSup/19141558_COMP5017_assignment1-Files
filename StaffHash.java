@@ -48,7 +48,6 @@ public class StaffHash implements IStaffDB {
         return hash;
     }
 
-    // get employee by name
     @Override
     public Employee get(String name) {
         // the index is the hash of the name
