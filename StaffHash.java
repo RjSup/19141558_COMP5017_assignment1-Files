@@ -97,7 +97,7 @@ public class StaffHash implements IStaffDB {
         //while the index is less than the max size
         while(attempt < maxSize) {
             // if there is no employee with name
-            if(table[index] == nul){
+            if(table[index] == null){
                 // add employee name
                 table[index] = employee;
                 // increase the size of table
