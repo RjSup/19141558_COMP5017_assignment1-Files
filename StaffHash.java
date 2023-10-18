@@ -17,6 +17,7 @@ public class StaffHash implements IStaffDB {
 
     @Override
     public void clearDB() {
+        assert table != null : "Hash table must not be null";
         Arrays.fill(table, null);
         size = 0;
     }
@@ -24,6 +25,7 @@ public class StaffHash implements IStaffDB {
 
     @Override
     public boolean containsName(String name) {
+        assert name != null && !name.isEmpty() : "Employee name must not be empty";
         // use index to find names in hash table
         int index = hash(name);
         int attempt = 0;
@@ -51,6 +53,7 @@ public class StaffHash implements IStaffDB {
 
     @Override
     public Employee get(String name) {
+        assert name != null && !name.isEmpty() : "Employee cannot be empty";
         // the index is the hash of the name
         int index = hash(name);
         int attempt = 0;
@@ -82,10 +85,14 @@ public class StaffHash implements IStaffDB {
     // add an employee into the table (make the collision handles quadratic probing)
     @Override
     public Employee put(Employee employee) {
+        // ensure the employee name is not null
+        assert employee.getName() != null && !employee.getName().isEmpty(): "The Employee cannot be empty or null";
+
         // calculate load factor
         double loadFactor = (double) (size) / table.length;
 
         // if load factor too big resize the table
+
         if(loadFactor > loadFactorThreshold) {
             // create a resize method
             resize();
@@ -148,6 +155,8 @@ public class StaffHash implements IStaffDB {
 
     @Override
     public Employee remove(String name) {
+        assert name != null && !name.isEmpty(): "The Employee cannot be empty or null";
+
         int index = hash(name);
         int attempt = 0;
         double loadFactor = (double) (size + 1) / table.length;
