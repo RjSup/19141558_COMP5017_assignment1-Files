@@ -1,6 +1,5 @@
 package comp5017.cw1.pkg2023;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 
 public class StaffHash implements IStaffDB {
@@ -33,11 +32,13 @@ public class StaffHash implements IStaffDB {
         while(table[index] != null) {
             // if the name at index of table equals the name then true
             if(table[index].getName().equals(name)) {
+                logInfo(table[index], index, attempt);
                 return true;
             }
             attempt++;
             index = probe(index,attempt);
         }
+        logInfo(table[index], index, attempt);
         return false;
     }
 
@@ -113,22 +114,31 @@ public class StaffHash implements IStaffDB {
                 table[index] = employee;
                 // increase the size of table
                 size++;
+                logInfo(employee, index, attempt);
+                System.out.println("Collision Handling Attempt: " + attempt);
+                System.out.println("New Index: " + index);
+                System.out.println("load Factor: " + loadFactor);
                 return null;
                 // if the employee name already exists
             } else if(table[index].getName().equals(employee.getName())){
                 // return it
                 return employee;
-                // else employee not found and doesnt already exist or error = collision
+                // else employee not found and doesn't already exist or error = collision
             } else {
                 //implement the probing here - probe method needed
                 attempt++;
                 index = probe(index,attempt);
             }
+            logInfo(employee, index, attempt);
+            System.out.println("Collision Handling Attempt: " + attempt);
+            System.out.println("New Index: " + index);
+            System.out.println("load Factor: " + loadFactor);
         }
         return null;
     }
 
     private void resize() {
+        System.out.println("Resizing");
         // create a new array
         Employee[] tableTwo = new Employee[table.length * 2];
 
@@ -145,10 +155,11 @@ public class StaffHash implements IStaffDB {
                 }
             }
         }
+        System.out.println("Resizing Complete");
         table = tableTwo;
     }
 
-    // a quadratic prope for collisions
+    // a quadratic probe for collisions
     private int probe(int index, int attempt) {
         return (index + attempt * attempt) % table.length;
     }
@@ -169,14 +180,27 @@ public class StaffHash implements IStaffDB {
                 Employee removedEmployee = table[index];
                 table[index] = null;
                 size--;
+                System.out.println("Collision Handling Attempt: " + attempt);
+                System.out.println("New Index: " + index);
+                System.out.println("load Factor: " + loadFactor);
                 return removedEmployee;
             } else {
                 //collision situation
                 attempt++;
                 index = probe(index, attempt);
             }
+            logInfo(table[index], index, attempt);
+            System.out.println("Load Factor: " + loadFactor);
         }
+
         return null;
+    }
+
+    // for logging information
+    private void logInfo(Employee employee, int hashValue, int index) {
+        System.out.println("Employee name: " + employee.getName() + "\nAffiliation: " + employee.getAffiliation());
+        System.out.println("Hash Value: " + hashValue);
+        System.out.println("Buckets Visited: " + index);
     }
 
     @Override
