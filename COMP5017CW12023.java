@@ -14,7 +14,7 @@ import javax.swing.*;
 public class COMP5017CW12023 {
 
     static Scanner kb;
-    static IStaffDB db = new StaffHash(); // change to StaffBST for Assignment 2
+    static IStaffDB db = new StaffBST(); // change to StaffBST for Assignment 2
 
     private static String readNonEmpty() {
         // read non-null, non-empty string;
@@ -63,7 +63,7 @@ public class COMP5017CW12023 {
                 case 's':  //size
                     System.out.println("Size " + db.size());
                     break;
-                    
+
                 case 'G':
                 case 'g':  // get
                     System.out.print("Name? ");
@@ -144,7 +144,7 @@ public class COMP5017CW12023 {
     // or wherever you have put your graph files, in order to get the file chooser to
     // start in the folder - note that in Java strings, \ is an escape character, so
     // to get a single \, you need to write \\ in the pathname of the folder.
-    private static String startFolder = ".";
+    private static String startFolder = "/Users/ryan/Documents/19141558_COMP5017_assignment1-Files/RandomNamesEmails.csv";
 
     private static void loadFile() {
         String cvsSplitBy = ",";

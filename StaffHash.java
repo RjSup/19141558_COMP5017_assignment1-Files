@@ -1,218 +1,294 @@
 package comp5017.cw1.pkg2023;
 
-import java.util.Arrays;
-
 public class StaffHash implements IStaffDB {
 
-    private Employee[] table; // The hash table
-    private int size; // size of table
-    private static final int initialCapacity = 16; // the initial capacity of the hash table
-    private static final double loadFactorThreshold = 0.5; // load factor threshold
+    // The hash table
+    private Employee[] table;
+    // size of the table
+    private int size;
+    // the initial capacity of the hash table
+    private static final int initialCapacity = 11;
+    // load factor threshold
+    private static final double loadFactorThreshold = 0.5;
 
     public StaffHash() {
+        System.out.println("Hash Table");
+        // Initialise the hash table with the initial capacity
         this.table = new Employee[initialCapacity];
+        // Set the initial size of the table to 0
         this.size = 0;
     }
 
     @Override
     public void clearDB() {
+        // Check that the table is not null
         assert table != null : "Hash table must not be null";
-        Arrays.fill(table, null);
+        for (int i = 0; i < table.length; i++) {
+            // Clear all entries in the hash table
+            table[i] = null;
+            // check table is empty
+            isEmpty();
+        }
+        // Reset the size to 0
         size = 0;
     }
 
-
     @Override
     public boolean containsName(String name) {
+        // Check for valid input
         assert name != null && !name.isEmpty() : "Employee name must not be empty";
-        // use index to find names in hash table
+        // Calculate the initial hash index for the given name
         int index = hash(name);
+        // Initialise an attempt counter
         int attempt = 0;
-        // while a name exists
-        while(table[index] != null) {
-            // if the name at index of table equals the name then true
-            if(table[index].getName().equals(name)) {
+        while (table[index] != null) {
+            if (!table[index].isDeleted() && table[index].getName().equals(name)) {
+                // Log information about the operation
                 logInfo(table[index], index, attempt);
+                // Employee with the given name found
                 return true;
             }
             attempt++;
-            index = probe(index,attempt);
+            // Move to the next slot using probe
+            index = probe(index, attempt + 1);
         }
-        logInfo(table[index], index, attempt);
+        // Log information about the operation
+        logInfo(null, index, attempt);
+        // Employee with the given name not found
         return false;
     }
 
-    // research more hash methods
-    public int hash(String name){
+    public int hash(String name) {
         int hash = 0;
-        int prime = 31;
-        for(int i = 0; i < name.length(); i++) {
-            hash = (hash * prime + name.charAt(i)) % table.length;
+        for (int i = 0; i < name.length(); i++) {
+            // Multiply the current hash by 31 and add the ASCII value of each character in the name
+            hash = (hash * 31 + name.charAt(i)) % table.length;
         }
-        return hash;
+        // Ensure the computed hash value is within the bounds of the hash table
+        return (hash + table.length) % table.length;
     }
+
 
     @Override
     public Employee get(String name) {
+        // Check for valid input
         assert name != null && !name.isEmpty() : "Employee cannot be empty";
-        // the index is the hash of the name
+        // Calculate the initial hash index for the given name
         int index = hash(name);
+        // Initialise an attempt counter
         int attempt = 0;
-        // while a name exists
-        while(table[index] != null){
-            // if name exists return it
-            if(table[index].getName().equals(name)){
+        // Continue until an empty slot is found
+        while (table[index] != null) {
+            if (!table[index].isDeleted() && table[index].getName().equals(name)) {
+                // Log information about the operation
+                logInfo(table[index], index, attempt);
+                // Return the found employee
                 return table[index];
             }
             attempt++;
-            index = probe(index,attempt);
+            // Move to the next slot using probing
+            index = probe(index, attempt + 1);
         }
+        // Log information about the operation
+        logInfo(table[index], index, attempt);
+        // Employee with the given name not found
         return null;
     }
 
-    @Override
-    // current size of table
     public int size() {
-        // to return the size
-        return size;
+        // Initialise a counter to keep track of the number of active employees
+        int count = 0;
+        for (Employee employee : table) {
+            if (employee != null && !employee.isDeleted()) {
+                // Increment the count for each active employee found
+                count++;
+            }
+        }
+        // Return the total count of active employees in the database
+        return count;
     }
 
-    // check if table is empty
-    @Override
     public boolean isEmpty() {
-        return size == 0;
+        for (Employee employee : table) {
+            if (employee != null && !employee.isDeleted()) {
+                // If an active employee is found, the database is not empty
+                return false;
+            }
+        }
+        // If no active employees are found, the database is considered empty
+        return true;
     }
 
-    // add an employee into the table (make the collision handles quadratic probing)
     @Override
     public Employee put(Employee employee) {
-        // ensure the employee name is not null
-        assert employee.getName() != null && !employee.getName().isEmpty(): "The Employee cannot be empty or null";
+        // Check for valid input
+        assert employee.getName() != null && !employee.getName().isEmpty() : "The Employee cannot be empty or null";
 
-        // calculate load factor
         double loadFactor = (double) (size) / table.length;
 
-        // if load factor too big resize the table
-
-        if(loadFactor > loadFactorThreshold) {
-            // create a resize method
+        if (loadFactor > loadFactorThreshold) {
+            // If the load factor exceeds the threshold, trigger resizing
             resize();
         }
 
-        // calculate index with hash
         int index = hash(employee.getName());
-        // attempt
         int attempt = 0;
-        // a max size
         int maxSize = table.length;
 
-        //while the index is less than the max size
-        while(attempt < maxSize) {
-            // if there is no employee with name
-            if(table[index] == null){
-                // add employee name
+        while (attempt < maxSize) {
+            if (isEmpty()) {
+                table[hash(employee.getName())] = employee;
+                size++;
+                // If the database is empty, add the employee and return null
+                return null;
+            }
+            if (table[index] == null || table[index].isDeleted()) {
                 table[index] = employee;
-                // increase the size of table
                 size++;
                 logInfo(employee, index, attempt);
-                System.out.println("Collision Handling Attempt: " + attempt);
-                System.out.println("New Index: " + index);
-                System.out.println("load Factor: " + loadFactor);
+                // If an empty slot is found, add the employee and return null
                 return null;
-                // if the employee name already exists
-            } else if(table[index].getName().equals(employee.getName())){
-                // return it
-                return employee;
-                // else employee not found and doesn't already exist or error = collision
+            } else if (table[index].getName().equals(employee.getName())) {
+                logInfo(employee, index, attempt);
+                // If an employee with the same name exists, return that employee
+                return table[index];
             } else {
-                //implement the probing here - probe method needed
                 attempt++;
-                index = probe(index,attempt);
+                // Move to the next slot using probing
+                index = probe(index, attempt + 1);
             }
-            logInfo(employee, index, attempt);
-            System.out.println("Collision Handling Attempt: " + attempt);
-            System.out.println("New Index: " + index);
-            System.out.println("load Factor: " + loadFactor);
         }
+        logInfo(employee, index, attempt);
+        // If the method reaches this point, it means no suitable slot was found
         return null;
     }
 
     private void resize() {
-        System.out.println("Resizing");
-        // create a new array
+        // Create a new table with double the size
         Employee[] tableTwo = new Employee[table.length * 2];
 
-        // allow the new array to be used
-        for(Employee employee : table) {
-            if(employee != null){
-                // add employee
+        for (Employee employee : table) {
+            if (employee != null && !employee.isDeleted()) {
                 int index = hash(employee.getName());
-                int attempt= 0;
-                // while array is not empty
-                while(tableTwo[index] != null){
+                int attempt = 0;
+                while (tableTwo[index] != null) {
                     attempt++;
-                    index = probe(index, attempt);
+                    // Move to the next slot using probing
+                    index = probe(index, attempt + 1);
                 }
+                // Place the employee in the new table
+                tableTwo[index] = employee;
             }
         }
+        // Log a message indicating the resizing is done
         System.out.println("Resizing Complete");
+        // Update the reference to the new table
         table = tableTwo;
     }
 
-    // a quadratic probe for collisions
     private int probe(int index, int attempt) {
-        return (index + attempt * attempt) % table.length;
+        // Calculate the next index using probing
+        return (index + (attempt + 1) * (attempt + 1)) % table.length;
     }
 
     @Override
     public Employee remove(String name) {
-        assert name != null && !name.isEmpty(): "The Employee cannot be empty or null";
+        // Check for valid input
+        assert name != null && !name.isEmpty() : "The Employee name cannot be empty or null";
 
+        // Calculate the initial hash index for the given name
         int index = hash(name);
+        // Initialize an attempt counter
         int attempt = 0;
-        double loadFactor = (double) (size + 1) / table.length;
 
-        //while a name exists and the attempt is within table length
-        while(table[index] != null && attempt < table.length) {
-            //if employee with same name exists
-            if(table[index].getName().equals(name)) {
-                // remove it
+        // Continue until an empty slot or the end of the table is reached
+        while (table[index] != null && attempt < table.length) {
+            if (!table[index].isDeleted() && table[index].getName().equals(name)) {
+                // Store the employee to be removed
                 Employee removedEmployee = table[index];
-                table[index] = null;
+                // Mark the employee as deleted
+                table[index].markAsDeleted();
+                // Decrement the size of the database
                 size--;
-                System.out.println("Collision Handling Attempt: " + attempt);
-                System.out.println("New Index: " + index);
-                System.out.println("load Factor: " + loadFactor);
+                // Log information about the operation
+                logInfo(removedEmployee, index, attempt);
+                // Return the removed employee
                 return removedEmployee;
             } else {
-                //collision situation
                 attempt++;
-                index = probe(index, attempt);
+                // Move to the next slot using probing
+                index = probe(index, attempt + 1);
             }
-            logInfo(table[index], index, attempt);
-            System.out.println("Load Factor: " + loadFactor);
         }
-
+        // Log information about the operation
+        logInfo(null, index, attempt);
+        // Employee with the given name not found
         return null;
     }
 
-    // for logging information
     private void logInfo(Employee employee, int hashValue, int index) {
-        System.out.println("Employee name: " + employee.getName() + "\nAffiliation: " + employee.getAffiliation());
+        // Log the employee's name or "Not Found"
+        System.out.println("Employee: " + (employee != null ? employee.getName() : "Not Found"));
+        // Log the hash value
         System.out.println("Hash Value: " + hashValue);
+        // Log the number of buckets visited
         System.out.println("Buckets Visited: " + index);
+        // Log the current load factor
+        System.out.println("Load Factor: " + ((double) size / table.length));
     }
+
+    public void bubbleSortingAlgo() {
+        // Get the number of active employees in the database
+        int n = size();
+        // Create an array to hold the employees for sorting
+        Employee[] employees = new Employee[n];
+        // Initialise an index counter
+        int index = 0;
+
+        // Populate the employees array with active employees from the table
+        for (Employee employee : table) {
+            if (employee != null && !employee.isDeleted()) {
+                // Copy active employees to the employees array
+                employees[index] = employee;
+                index++;
+            }
+        }
+
+        // Bubble Sort algorithm for sorting employees by name
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (employees[j].getName().compareTo(employees[j + 1].getName()) > 0) {
+                    // Swap employees[j] and employees[j+1] to sort them in ascending order
+                    Employee temp = employees[j];
+                    employees[j] = employees[j + 1];
+                    employees[j + 1] = temp;
+                }
+            }
+        }
+
+        // Update the hash table with the sorted employees
+        index = 0;
+        for (int i = 0; i < table.length; i++) {
+            if (table[i] != null && !table[i].isDeleted()) {
+                // Replace the unsorted employee with the sorted employee
+                table[i] = employees[index];
+                index++;
+            }
+        }
+    }
+
 
     @Override
     public void displayDB() {
-        // for each employee of Employee object in table
-        for(Employee employee : table) {
-            // if employee exists
-            if(employee != null) {
-                //print details
+        // Send the table of employees to the bubble sorter to sort them alphabetically
+        bubbleSortingAlgo();
+
+        // Display the sorted employees with their affiliations
+        for (Employee employee : table) {
+            if (employee != null && !employee.isDeleted()) {
+                // Print the employee's name and affiliation
                 System.out.println(employee.getName() + ": " + employee.getAffiliation());
             }
         }
     }
 }
-// dhsdsd
